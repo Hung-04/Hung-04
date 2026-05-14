@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<title>QuestionAI — Sinh câu hỏi thông minh</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap&v=2" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>"/>
+<style>
+  :root {
+    --bg: #0e0f13;
+    --surface: #16181f;
+    --surface2: #1e2029;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #6c63ff;
+    --accent2: #a78bfa;
+    --accent-glow: rgba(108,99,255,0.18);
+    --text: #f0f0f5;
+    --muted: #8b8fa8;
+    --muted2: #5a5e72;
+    --green: #34d399;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --radius: 12px;
+    --radius-lg: 18px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text);
+    padding: 0 22px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent);
+  }
+
+  .nav {
+    padding: 18px 0;
+    flex: 1;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    cursor: pointer;
+    color: #ffffff !important;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.18s;
+    border-left: 2px solid transparent;
+  }
+
+  .nav-item:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
+  .nav-item.active {
+    color: #ffffff !important;
+    border-left-color: var(--accent);
+    background: var(--accent-glow);
+    font-weight: 600;
+  }
+
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* ── Main ── */
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    height: 60px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+    gap: 12px;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .page { display: none; padding: 32px; animation: fadeIn 0.25s ease; }
+  .page.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+
+  .card + .card { margin-top: 20px; }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 18px;
+  }
+
+  /* ── Upload area ── */
+  .upload-zone {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  .upload-icon { font-size: 36px; margin-bottom: 12px; }
+  .upload-label { font-size: 17px; color: #ffffff !important; font-weight: 600; margin-bottom: 6px; }
+  .upload-hint { font-size: 15px; color: #ffffff !important; font-weight: 500; }
+
+  /* ── Textarea ── */
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 14px 16px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.18s;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--muted2); }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    color: #ffffff !important;
+    transition: all 0.18s;
+  }
+
+  .tab.active { background: var(--surface); color: #ffffff !important; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .tab:hover:not(.active) { color: #ffffff !important; }
+
+  /* ── Form elements ── */
+  label.field-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff !important;
+    margin-bottom: 10px;
+  }
+
+  select, input[type=number] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.18s;
+    appearance: none;
+  }
+
+  select:focus, input[type=number]:focus { border-color: var(--accent); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+  /* ── Type selector ── */
+  .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+
+  .type-card {
+    border: 1.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+  }
+
+  .type-card:hover { border-color: var(--accent2); background: rgba(108,99,255,0.05); }
+  .type-card.selected { border-color: var(--accent); background: var(--accent-glow); }
+  .type-card .type-icon { font-size: 28px; margin-bottom: 8px; }
+  .type-card .type-name { font-weight: 700; font-size: 18px; font-family: 'Syne', sans-serif; color: #ffffff !important; }
+  .type-card .type-desc { font-size: 15px; color: #ffffff !important; margin-top: 4px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #5a52e0; transform: translateY(-1px); }
+  .btn-primary:active { transform: none; }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--accent2); background: var(--accent-glow); }
+
+  .btn-danger {
+    background: transparent;
+    border: 1px solid rgba(248,113,113,0.3);
+    color: var(--red);
+  }
+  .btn-danger:hover { background: rgba(248,113,113,0.1); }
+
+  .btn-sm { padding: 7px 14px; font-size: 13px; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* ── Progress / Status ── */
+  .status-bar {
+    background: var(--surface2);
+    border-radius: 100px;
+    height: 4px;
+    margin-top: 14px;
+    overflow: hidden;
+  }
+  .status-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 100px;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  .status-msg {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+    min-height: 20px;
+  }
+
+  /* ── Question cards ── */
+  .q-list { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; }
+
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    transition: border-color 0.18s;
+  }
+
+  .q-card:hover { border-color: var(--border2); }
+
+  .q-card.editing { border-color: var(--accent); }
+
+  .q-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .q-num {
+    background: var(--accent-glow);
+    color: var(--accent2);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    padding: 3px 9px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .q-text {
+    font-size: 15px;
+    font-weight: 500;
+    flex: 1;
+    line-height: 1.55;
+  }
+
+  .q-text-edit {
+    flex: 1;
+  }
+
+  .q-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* MCQ options */
+  .options-grid { display: flex; flex-direction: column; gap: 8px; }
+
+  .option-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+  }
+
+  .option-item.correct {
+    border-color: rgba(52,211,153,0.4);
+    background: rgba(52,211,153,0.07);
+  }
+
+  .option-key {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+    color: var(--muted);
+  }
+
+  .option-item.correct .option-key {
+    background: rgba(52,211,153,0.2);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* Essay key points */
+  .key-points { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .key-point {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 13px; color: var(--muted);
+  }
+  .key-point::before {
+    content: '•';
+    color: var(--accent2);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Explanation */
+  .explanation {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(108,99,255,0.07);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-right: 8px;
+  }
+
+  .badge-mcq { background: rgba(108,99,255,0.15); color: var(--accent2); }
+  .badge-essay { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .badge-green { background: rgba(52,211,153,0.15); color: var(--green); }
+
+  /* ── History table ── */
+  .history-list { display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── Document bank ── */
+  #document-bank-container { min-height: 200px; padding: 10px 0; }
+
+  .history-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+
+  .history-item:hover { border-color: var(--border2); background: var(--surface); }
+
+  .history-icon {
+    width: 38px; height: 38px;
+    background: var(--accent-glow);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .history-info { flex: 1; }
+  .history-name { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+  .history-meta { font-size: 12px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 44px; margin-bottom: 14px; opacity: 0.5; }
+  .empty-text { font-size: 15px; margin-bottom: 6px; color: var(--text); }
+  .empty-sub { font-size: 13px; }
+
+  /* ── Toast ── */
+  .toast-container {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 999;
+  }
+
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-size: 13px;
+    display: flex; align-items: center; gap: 10px;
+    animation: slideUp 0.25s ease;
+    max-width: 320px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.error { border-left: 3px solid var(--red); }
+  .toast.info { border-left: 3px solid var(--accent); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 22px;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .modal-close {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 20px; padding: 4px;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .stat-label {
+    font-size: 16px;
+    color: #ffffff !important;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted2); font-size: 12px;
+    margin: 18px 0;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--border);
+  }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .form-row, .type-grid, .stats-row { grid-template-columns: 1fr; }
+  }
+
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  input[type=number]::-webkit-inner-spin-button { opacity: 1; }
+
+  .file-preview {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-top: 12px;
+  }
+
+  .file-preview-icon { font-size: 24px; }
+  .file-preview-name { font-size: 14px; font-weight: 500; flex: 1; }
+  .file-preview-size { font-size: 12px; color: var(--muted); }
+  .file-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 4px; }
+  .file-remove:hover { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    QuestionAI
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="navigate('generate')">
+      <span class="nav-icon">✦</span> Sinh câu hỏi
+    </div>
+    <div class="nav-item" onclick="navigate('history')">
+      <span class="nav-icon">◈</span> Ngân hàng câu hỏi
+    </div>
+  </nav>
+</aside>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Sinh câu hỏi</div>
+  </div>
+
+  <!-- ── Page: Generate ── -->
+  <div class="page active" id="page-generate">
+    <div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-total">0</div>
+          <div class="stat-label">Tổng câu hỏi</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-mcq">0</div>
+          <div class="stat-label">Trắc nghiệm</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-essay">0</div>
+          <div class="stat-label">Tự luận</div>
+        </div>
+      </div>
+
+      <!-- Upload card -->
+      <div class="card">
+        <div class="card-title">📄 Tài liệu đầu vào</div>
+
+        <div class="tabs">
+          <div class="tab active" onclick="switchInputTab('file')">Tải file lên</div>
+          <div class="tab" onclick="switchInputTab('paste')">Dán văn bản</div>
+          <div class="tab" onclick="switchInputTab('bank')">Ngân hàng tài liệu</div>
+        </div>
+
+                <!-- File upload -->
+        <div id="input-file">
+          <div class="upload-zone" id="drop-zone">
+            <input type="file" id="file-input" accept=".pdf,.docx,.txt" onchange="handleFileSelect(this)"/>
+            <div class="upload-icon">?</div>
+            <div class="upload-label">Kéo thả file vào đây hoặc bấm để chọn</div>
+            <div class="upload-hint">Hỗ trợ: PDF, DOCX, TXT — tối đa 20MB</div>
+          </div>
+          <div id="file-preview-area"></div>
+
+          <div class="status-bar" id="upload-progress-bar" style="display:none">
+            <div class="status-fill" id="upload-fill"></div>
+          </div>
+          <div class="status-msg" id="upload-status"></div>
+        </div>        </div>
+
+        <!-- Paste text -->
+        <div id="input-paste" style="display:none">
+          <textarea id="paste-text" rows="9" placeholder="Dán nội dung tài liệu vào đây..."></textarea>
+          <div style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <span class="status-msg" id="paste-count">0 ký tự</span>
+            <button class="btn btn-outline btn-sm" onclick="clearPaste()">Xóa</button>
+          </div>
+        </div>
+
+        <!-- Document bank -->
+        <div id="input-bank" style="display:none; width:100%;">
+          <div id="document-bank-container" style="width:100%;"></div>
+        </div>
+      </div>
+
+      <!-- Config card -->
+      <div class="card">
+        <div class="card-title">⚙️ Cấu hình câu hỏi</div>
+
+        <label class="field-label">Loại câu hỏi</label>
+        <div class="type-grid">
+          <div class="type-card selected" onclick="selectType('mcq')" id="type-mcq">
+            <div class="type-icon">🔵</div>
+            <div class="type-name">Trắc nghiệm</div>
+            <div class="type-desc">4 lựa chọn A/B/C/D</div>
+          </div>
+          <div class="type-card" onclick="selectType('essay')" id="type-essay">
+            <div class="type-icon">✏️</div>
+            <div class="type-name">Tự luận</div>
+            <div class="type-desc">Câu hỏi mở, gợi ý đáp án</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label class="field-label">Số câu hỏi</label>
+            <input type="number" id="num-questions" value="5" min="1" max="50"/>
+          </div>
+          <div>
+            <label class="field-label">Độ khó</label>
+            <select id="difficulty-select">
+              <option value="easy">Dễ</option>
+              <option value="medium" selected>Trung bình</option>
+              <option value="hard">Khó</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label class="field-label">Số câu mỗi lần gọi AI</label>
+            <input type="number" id="batch-size" value="5" min="1" max="10"/>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-full" id="generate-btn" onclick="startGenerate()">
+          <span id="gen-spinner" class="spinner"></span>
+          <span id="gen-label">✦ Sinh câu hỏi</span>
+        </button>
+      </div>
+
+      <!-- Results -->
+      <div id="results-section" style="display:none">
+        <div class="card">
+          <div class="section-header">
+            <div>
+              <div class="card-title" style="margin:0 0 4px">KẾT QUẢ</div>
+              <div style="font-size:13px; color:var(--muted)" id="result-summary"></div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" onclick="saveAll()">💾 Lưu tất cả</button>
+              <button class="btn btn-outline btn-sm" onclick="exportJSON()">⬇ Xuất JSON</button>
+            </div>
+          </div>
+
+          <div class="q-list" id="q-list"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Page: History ── -->
+  <div class="page" id="page-history">
+    <div>
+      <div class="section-header">
+        <div class="section-title">Ngân hàng câu hỏi</div>
+        <div style="display:flex; gap:8px;">
+          <select id="filter-type" onchange="renderHistory()" style="width:auto; padding: 8px 12px; font-size:13px;">
+            <option value="">Tất cả loại</option>
+            <option value="mcq">Trắc nghiệm</option>
+            <option value="essay">Tự luận</option>
+          </select>
+          <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑 Xóa tất cả</button>
+        </div>
+      </div>
+
+      <div id="history-container"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Chỉnh sửa câu hỏi</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <input type="hidden" id="edit-idx"/>
+    <input type="hidden" id="edit-source"/>
+
+    <label class="field-label">Câu hỏi</label>
+    <textarea id="edit-question" rows="3" style="margin-bottom:16px"></textarea>
+
+    <div id="edit-mcq-section">
+      <label class="field-label">Các lựa chọn</label>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;" id="edit-options-list"></div>
+
+      <label class="field-label">Đáp án đúng</label>
+      <select id="edit-answer" style="margin-bottom:16px">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+
+      <label class="field-label">Giải thích</label>
+      <textarea id="edit-explanation" rows="2" style="margin-bottom:16px"></textarea>
+    </div>
+
+    <div id="edit-essay-section" style="display:none">
+      <label class="field-label">Gợi ý đáp án</label>
+      <textarea id="edit-suggested" rows="3" style="margin-bottom:16px"></textarea>
+
+      <label class="field-label">Các ý chính (mỗi dòng 1 ý)</label>
+      <textarea id="edit-keypoints" rows="4" style="margin-bottom:16px"></textarea>
+    </div>
+
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="closeModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const API = '/api';
+let state = {
+  inputTab: 'file',
+  questionType: 'mcq',
+  docId: null,
+  currentQuestions: [],    // câu hỏi vừa sinh
+  savedQuestions: JSON.parse(localStorage.getItem('savedQuestions') || '[]'),
+};
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item')[page === 'generate' ? 0 : 1].classList.add('active');
+  document.getElementById('topbar-title').textContent =
+    page === 'generate' ? 'Sinh câu hỏi' : 'Ngân hàng câu hỏi';
+  if (page === 'history') renderHistory();
+  updateStats();
+}
+
+// ── Input tabs ─────────────────────────────────────────────────────────────
+function switchInputTab(tab) {
+  console.log('DEBUG: switchInputTab called with:', tab);
+  state.inputTab = tab;
+  document.getElementById('input-file').style.display = tab === 'file' ? 'block' : 'none';
+  document.getElementById('input-paste').style.display = tab === 'paste' ? 'block' : 'none';
+  document.getElementById('input-bank').style.display = tab === 'bank' ? 'block' : 'none';
+  
+  // Load document bank when switching to bank tab
+  if (tab === 'bank') {
+    console.log('DEBUG: Loading document bank...');
+    loadDocumentBank();
+  }
+  
+  document.querySelectorAll('.tabs .tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'file') || (i === 1 && tab === 'paste') || (i === 2 && tab === 'bank'));
+  });
+}
+
+// Đếm ký tự textarea
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('paste-text').addEventListener('input', function() {
+    document.getElementById('paste-count').textContent = this.value.length.toLocaleString() + ' ký tự';
+  });
+
+  // Drag & drop
+  const zone = document.getElementById('drop-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  });
+
+  updateStats();
+});
+
+// ── File handling ──────────────────────────────────────────────────────────
+function handleFileSelect(input) {
+  if (input.files[0]) processFile(input.files[0]);
+}
+
+function processFile(file) {
+  const allowed = ['pdf', 'docx', 'txt'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!allowed.includes(ext)) { toast('Định dạng không được hỗ trợ!', 'error'); return; }
+  if (file.size > 20 * 1024 * 1024) { toast('File quá lớn (tối đa 20MB)', 'error'); return; }
+
+  // Hiển thị preview
+  const icon = ext === 'pdf' ? '📄' : ext === 'docx' ? '📝' : '📃';
+  document.getElementById('file-preview-area').innerHTML = `
+    <div class="file-preview">
+      <div class="file-preview-icon">${icon}</div>
+      <div class="file-preview-name">${file.name}</div>
+      <div class="file-preview-size">${(file.size / 1024).toFixed(1)} KB</div>
+      <button class="file-remove" onclick="removeFile()" title="Xóa file">✕</button>
+    </div>`;
+
+  // Upload lên server
+  uploadFile(file);
+}
+
+function removeFile() {
+  state.docId = null;
+  document.getElementById('file-preview-area').innerHTML = '';
+  document.getElementById('file-input').value = '';
+  setStatus('', 0);
+}
+
+function clearPaste() {
+  document.getElementById('paste-text').value = '';
+  document.getElementById('paste-count').textContent = '0 ký tự';
+}
+
+async function uploadFile(file) {
+  const bar = document.getElementById('upload-progress-bar');
+  const fill = document.getElementById('upload-fill');
+  bar.style.display = 'block';
+  setStatus('Đang tải lên...', 20);
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    setStatus('Đang xử lý tài liệu...', 55);
+    const res = await fetch(`${API}/upload`, { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.detail || 'Upload thất bại');
+
+    state.docId = data.doc_id;
+    setStatus(`✓ Sẵn sàng — ${data.num_chunks} đoạn văn bản`, 100);
+    toast(`Tải lên thành công: ${data.filename}`, 'success');
+    setTimeout(() => { bar.style.display = 'none'; fill.style.width = '0%'; }, 2000);
+  } catch (err) {
+    setStatus('⚠ ' + err.message, 0);
+    toast(err.message, 'error');
+    bar.style.display = 'none';
+  }
+}
+
+function setStatus(msg, pct) {
+  document.getElementById('upload-status').textContent = msg;
+  document.getElementById('upload-fill').style.width = pct + '%';
+}
+
+// ── Type selector ──────────────────────────────────────────────────────────
+function selectType(type) {
+  state.questionType = type;
+  document.getElementById('type-mcq').classList.toggle('selected', type === 'mcq');
+  document.getElementById('type-essay').classList.toggle('selected', type === 'essay');
+}
+
+// ── Generate ───────────────────────────────────────────────────────────────
+async function startGenerate() {
+  const num = parseInt(document.getElementById('num-questions').value);
+  const batchSize = parseInt(document.getElementById('batch-size').value);
+  const difficulty = document.getElementById('difficulty-select').value;
+
+  if (num < 1 || num > 50) { toast('Số câu hỏi phải từ 1 đến 50', 'error'); return; }
+
+  // Kiểm tra đầu vào
+  if (state.inputTab === 'file' && !state.docId) {
+    toast('Vui lòng tải file lên trước', 'error'); return;
+  }
+  if (state.inputTab === 'paste') {
+    const text = document.getElementById('paste-text').value.trim();
+    if (!text || text.length < 100) {
+        toast('Vui lòng dán ít nhất 100 ký tự văn bản', 'error'); return;
+    }
+    const res = await fetch(`${API}/generate-from-text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            text: text,
+            question_type: state.questionType,
+            difficulty: difficulty,
+            num: num,
+            batch_size: batchSize
+        })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Lỗi sinh câu hỏi');
+    state.currentQuestions = data.questions;
+    renderResults();
+    toast(`Đã sinh ${state.currentQuestions.length} câu hỏi`, 'success');
+    setGenerating(false);
+    return;
+}
+
+  setGenerating(true);
+  state.currentQuestions = [];
+
+  try {
+    if (state.inputTab === 'file') {
+      // Gọi API generate
+      const res = await fetch(`${API}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          doc_id: state.docId,
+          question_type: state.questionType,
+          difficulty: difficulty,
+          num: num,
+          batch_size: batchSize
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Lỗi sinh câu hỏi');
+      state.currentQuestions = data.questions;
+    }
+  } catch (err) {
+    toast('Lỗi: ' + err.message, 'error');
+  } finally {
+    setGenerating(false);
+  }
+
+  renderResults();
+}
+
+function setGenerating(on) {
+  const btn = document.getElementById('generate-btn');
+  const spinner = document.getElementById('gen-spinner');
+  const label = document.getElementById('gen-label');
+  btn.disabled = on;
+  spinner.style.display = on ? 'inline-block' : 'none';
+  label.textContent = on ? 'Đang sinh...' : '✦ Sinh câu hỏi';
+}
+
+// ── Render results ─────────────────────────────────────────────────────────
+function renderResults() {
+  const section = document.getElementById('results-section');
+  const list = document.getElementById('q-list');
+  const summary = document.getElementById('result-summary');
+
+  if (!state.currentQuestions.length) { section.style.display = 'none'; return; }
+
+  section.style.display = 'block';
+  summary.textContent = `${state.currentQuestions.length} câu hỏi ${state.questionType === 'mcq' ? 'trắc nghiệm' : 'tự luận'}`;
+  list.innerHTML = state.currentQuestions.map((q, i) => renderQCard(q, i, 'current')).join('');
+}
+
+function renderQCard(q, idx, source) {
+  const isMcq = state.questionType === 'mcq' || q.type === 'mcq';
+  let body = '';
+
+  if (isMcq && q.options) {
+    body = `<div class="options-grid">` +
+      Object.entries(q.options).map(([k, v]) =>
+        `<div class="option-item ${k === q.answer ? 'correct' : ''}">
+          <div class="option-key">${k}</div>
+          <div style="font-size:14px">${v}</div>
+          ${k === q.answer ? '<span style="margin-left:auto;font-size:11px;color:var(--green)">✓ Đúng</span>' : ''}
+        </div>`
+      ).join('') + `</div>`;
+    if (q.explanation) {
+      body += `<div class="explanation">💡 ${q.explanation}</div>`;
+    }
+  } else {
+    if (q.suggested_answer) {
+      body += `<div style="font-size:14px;color:var(--muted);margin-bottom:8px">${q.suggested_answer}</div>`;
+    }
+    if (q.key_points && q.key_points.length) {
+      body += `<div class="key-points">` +
+        q.key_points.map(kp => `<div class="key-point">${kp}</div>`).join('') +
+        `</div>`;
+    }
+  }
+
+  const typeLabel = (isMcq) ?
+    `<span class="badge badge-mcq">Trắc nghiệm</span>` :
+    `<span class="badge badge-essay">Tự luận</span>`;
+
+  const difficultyLabel = {
+    "easy": `<span class="badge badge-green">Dễ</span>`,
+    "medium": `<span class="badge" style="background: rgba(251,191,36,0.15); color: var(--amber)">Trung bình</span>`,
+    "hard": `<span class="badge" style="background: rgba(248,113,113,0.15); color: var(--red)">Khó</span>`
+  }[q.difficulty || "medium"];
+
+  return `
+    <div class="q-card" id="qcard-${source}-${idx}">
+      <div class="q-header">
+        <div class="q-num">#${idx + 1}</div>
+        <div class="q-text">${q.question}</div>
+      </div>
+      <div style="margin-top:12px">
+        ${typeLabel}
+        ${difficultyLabel}
+      </div>
+      <div style="margin-top:12px">${body}</div>
+      <div class="q-actions">
+        <button class="btn btn-outline btn-sm" onclick="openEdit(${idx}, '${source}')">✎ Sửa</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${idx}, '${source}')">✕ Xóa</button>
+        ${source === 'current' ? `<button class="btn btn-sm" style="background:var(--accent-glow);color:var(--accent2);border:1px solid var(--border2)" onclick="saveSingle(${idx})">💾 Lưu</button>` : ''}
+      </div>
+    </div>`;
+}
+
+// ── Save ───────────────────────────────────────────────────────────────────
+function saveSingle(idx) {
+  const q = state.currentQuestions[idx];
+  if (!q) return;
+  const record = {
+    ...q,
+    id: Date.now() + '_' + idx,
+    type: state.questionType,
+    doc_id: state.docId,
+    saved_at: new Date().toISOString()
+  };
+  state.savedQuestions.push(record);
+  persist();
+  toast('Đã lưu câu hỏi', 'success');
+  updateStats();
+
+  // Gọi API lưu nếu có docId
+  if (state.docId) {
+    fetch(`${API}/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        doc_id: state.docId,
+        question_type: state.questionType,
+        questions: [q]
+      })
+    }).catch(() => {});
+  }
+}
+
+async function saveAll() {
+  if (!state.currentQuestions.length) { toast('Không có câu hỏi để lưu', 'error'); return; }
+
+  // Lưu vào localStorage
+  const records = state.currentQuestions.map((q, i) => ({
+    ...q,
+    id: Date.now() + '_' + i,
+    type: state.questionType,
+    doc_id: state.docId,
+    saved_at: new Date().toISOString()
+  }));
+  state.savedQuestions.push(...records);
+  persist();
+  toast(`Đã lưu ${records.length} câu hỏi`, 'success');
+  updateStats();
+
+  // Gọi API lưu nếu có docId
+  if (state.docId) {
+    try {
+      const res = await fetch(`${API}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          doc_id: state.docId,
+          question_type: state.questionType,
+          questions: state.currentQuestions
+        })
+      });
+      if (!res.ok) throw new Error('Lỗi lưu câu hỏi');
+      const data = await res.json();
+      console.log('Đã lưu vào database:', data);
+    } catch (err) {
+      console.error('Lỗi lưu:', err);
+      toast('Lỗi lưu vào database', 'error');
+    }
+  }
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────
+function exportJSON() {
+  if (!state.currentQuestions.length) { toast('Không có câu hỏi để xuất', 'error'); return; }
+  const blob = new Blob([JSON.stringify(state.currentQuestions, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `questions-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Đã xuất file JSON', 'success');
+}
+
+// ── Edit ────────────────────────────────────────────────────────────────────
+function openEdit(idx, source) {
+  const q = source === 'current' ? state.currentQuestions[idx] : state.savedQuestions[idx];
+  if (!q) return;
+
+  document.getElementById('edit-idx').value = idx;
+  document.getElementById('edit-source').value = source;
+  document.getElementById('edit-question').value = q.question || '';
+
+  const isMcq = q.type === 'mcq' || (source === 'current' && state.questionType === 'mcq');
+  if (isMcq) {
+    document.getElementById('edit-mcq-section').style.display = 'block';
+    document.getElementById('edit-essay-section').style.display = 'none';
+
+    const optionsList = document.getElementById('edit-options-list');
+    const defaultOptions = q.options || { A: '', B: '', C: '', D: '' };
+    optionsList.innerHTML = ['A', 'B', 'C', 'D'].map(k => `
+      <input type="text" id="edit-option-${k}" value="${defaultOptions[k] || ''}" placeholder="Lựa chọn ${k}" style="margin-bottom:8px; width:100%; padding:8px; background:var(--surface2); border:1px solid var(--border2); border-radius:6px; color:var(--text);">
+    `).join('');
+
+    document.getElementById('edit-answer').value = q.answer || 'A';
+    document.getElementById('edit-explanation').value = q.explanation || '';
+  } else {
+    document.getElementById('edit-mcq-section').style.display = 'none';
+    document.getElementById('edit-essay-section').style.display = 'block';
+
+    document.getElementById('edit-suggested').value = q.suggested_answer || '';
+    const keyPointsText = Array.isArray(q.key_points) ? q.key_points.join('\n') : (q.key_points || '');
+    document.getElementById('edit-keypoints').value = keyPointsText;
+  }
+
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+
+function saveEdit() {
+  const idx = parseInt(document.getElementById('edit-idx').value);
+  const source = document.getElementById('edit-source').value;
+  const target = source === 'current' ? state.currentQuestions : state.savedQuestions;
+
+  if (!target[idx]) return;
+
+  const isMcq = target[idx].type === 'mcq' || (source === 'current' && state.questionType === 'mcq');
+
+  if (isMcq) {
+    const options = {};
+    ['A', 'B', 'C', 'D'].forEach(k => {
+      const input = document.getElementById(`edit-option-${k}`);
+      if (input) options[k] = input.value;
+    });
+
+    target[idx] = {
+      ...target[idx],
+      question: document.getElementById('edit-question').value,
+      options,
+      answer: document.getElementById('edit-answer').value,
+      explanation: document.getElementById('edit-explanation').value
+    };
+  } else {
+    const keyPointsText = document.getElementById('edit-keypoints').value;
+    const keyPoints = keyPointsText.split('\n').filter(line => line.trim());
+
+    target[idx] = {
+      ...target[idx],
+      question: document.getElementById('edit-question').value,
+      suggested_answer: document.getElementById('edit-suggested').value,
+      key_points: keyPoints
+    };
+  }
+
+  if (source === 'current') {
+    renderResults();
+  } else {
+    persist();
+    renderHistory();
+  }
+
+  closeModal();
+  toast('Đã cập nhật câu hỏi', 'success');
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────────
+function deleteQuestion(idx, source) {
+  if (source === 'current') {
+    state.currentQuestions.splice(idx, 1);
+    renderResults();
+  } else {
+    state.savedQuestions.splice(idx, 1);
+    persist();
+    renderHistory();
+  }
+  updateStats();
+  toast('Đã xóa câu hỏi', 'success');
+}
+
+// ── History ───────────────────────────────────────────────────────────────
+function renderHistory() {
+  const container = document.getElementById('history-container');
+  const filterType = document.getElementById('filter-type').value;
+
+  let filtered = state.savedQuestions;
+  if (filterType) {
+    filtered = filtered.filter(q => q.type === filterType);
+  }
+
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📚</div>
+        <div class="empty-text">Chưa có câu hỏi nào</div>
+        <div class="empty-sub">Bắt đầu sinh câu hỏi để xây dựng ngân hàng của bạn</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="history-list">
+      ${filtered.map((q, i) => `
+        <div class="history-item" onclick="openEdit(${state.savedQuestions.indexOf(q)}, 'saved')">
+          <div class="history-icon">${q.type === 'mcq' ? '🔵' : '✏️'}</div>
+          <div class="history-info">
+            <div class="history-name">${q.question}</div>
+            <div class="history-meta">
+              <span>${q.type === 'mcq' ? 'Trắc nghiệm' : 'Tự luận'}</span>
+              <span>${new Date(q.saved_at).toLocaleDateString('vi-VN')}</span>
+            </div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteQuestion(${state.savedQuestions.indexOf(q)}, 'saved')">✕</button>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function clearAll() {
+  if (!confirm('Xác nhận xóa tất cả câu hỏi?')) return;
+  state.savedQuestions = [];
+  persist();
+  renderHistory();
+  updateStats();
+  toast('Đã xóa tất cả', 'success');
+}
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+function persist() {
+  localStorage.setItem('savedQuestions', JSON.stringify(state.savedQuestions));
+}
+
+function updateStats() {
+  const total = state.savedQuestions.length;
+  const mcq = state.savedQuestions.filter(q => q.type === 'mcq').length;
+  const essay = state.savedQuestions.filter(q => q.type === 'essay').length;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-mcq').textContent = mcq;
+  document.getElementById('stat-essay').textContent = essay;
+}
+
+function toast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    ${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}
+    <span>${message}</span>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+</script>
+<script src="/static/document-bank.js?v=2"></script>
+</body>
+</html>
